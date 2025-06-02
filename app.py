@@ -30,7 +30,7 @@ def get_takealot_prices(url, driver):
         return None, None
 
 # Streamlit UI
-st.title("🔍 Takealot RSP Scraper (Fast Selenium Version)")
+st.title("🔍 Takealot RSP Scraper (For Kayla)")
 
 uploaded_file = st.file_uploader("📤 Upload Excel file with product URLs in column 3", type=["xlsx"])
 
