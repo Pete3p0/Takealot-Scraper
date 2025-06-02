@@ -4,7 +4,6 @@ streamlit
 bs4
 selenium
 XlsxWriter
-chromedriver_autoinstaller
 openpyxl
 sqlalchemy
 
