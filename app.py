@@ -5,10 +5,31 @@ import time
 from io import BytesIO
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-import chromedriver_autoinstaller
 
-# Ensure ChromeDriver is installed
-chromedriver_autoinstaller.install()
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
+
+def create_driver():
+    chrome_options = Options()
+    chrome_options.add_argument('--headless')
+    chrome_options.add_argument('--disable-dev-shm-usage')
+    chrome_options.add_argument('--no-sandbox')
+    chrome_options.add_argument('--disable-gpu')
+    chrome_options.add_argument('--window-size=1920x1080')
+    chrome_options.add_argument('--single-process')
+    chrome_options.add_argument('--disable-dev-tools')
+    chrome_options.add_argument('--no-zygote')
+    chrome_options.add_argument('--remote-debugging-port=9222')
+
+    chrome_path = '/usr/bin/chromium-browser'
+    driver_path = '/usr/bin/chromedriver'
+
+    service = Service(executable_path=driver_path)
+    driver = webdriver.Chrome(service=service, options=chrome_options)
+    return driver
+
+
 
 # Function to extract prices using a persistent Selenium driver
 def get_takealot_prices(url, driver):
@@ -49,13 +70,9 @@ if uploaded_file:
             url_col = df.columns[2]
 
             # Setup Selenium driver once
-            options = Options()
-            options.add_argument('--headless')
-            options.add_argument('--disable-gpu')
-            options.add_argument('--no-sandbox')
-            options.add_argument('--log-level=3')
-            options.add_argument("user-agent=Mozilla/5.0")
-            driver = webdriver.Chrome(options=options)
+            # Setup Selenium driver using cloud-safe config
+            driver = create_driver()
+
 
             with st.spinner("🔄 Scraping prices... Please be patient."):
                 for index, row in df.iterrows():
