@@ -5,30 +5,10 @@ import time
 from io import BytesIO
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+import chromedriver_autoinstaller
 
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.chrome.options import Options
-import os
-
-def create_driver():
-    chrome_options = Options()
-    chrome_options.add_argument('--headless')
-    chrome_options.add_argument('--disable-dev-shm-usage')
-    chrome_options.add_argument('--no-sandbox')
-    chrome_options.add_argument('--disable-gpu')
-    chrome_options.add_argument('--window-size=1920x1080')
-    chrome_options.binary_location = "/usr/bin/chromium"
-
-    # Let selenium find chromedriver installed in PATH
-    service = Service()  # No path needed if chromedriver is in PATH
-
-    driver = webdriver.Chrome(service=service, options=chrome_options)
-    return driver
-
-
-
-
+# Ensure ChromeDriver is installed
+chromedriver_autoinstaller.install()
 
 # Function to extract prices using a persistent Selenium driver
 def get_takealot_prices(url, driver):
@@ -50,7 +30,7 @@ def get_takealot_prices(url, driver):
         return None, None
 
 # Streamlit UI
-st.title("🔍 Takealot RSP Scraper (For Kayla)")
+st.title("🔍 Takealot RSP Scraper (Fast Selenium Version)")
 
 uploaded_file = st.file_uploader("📤 Upload Excel file with product URLs in column 3", type=["xlsx"])
 
@@ -69,9 +49,13 @@ if uploaded_file:
             url_col = df.columns[2]
 
             # Setup Selenium driver once
-            # Setup Selenium driver using cloud-safe config
-            driver = create_driver()
-
+            options = Options()
+            options.add_argument('--headless')
+            options.add_argument('--disable-gpu')
+            options.add_argument('--no-sandbox')
+            options.add_argument('--log-level=3')
+            options.add_argument("user-agent=Mozilla/5.0")
+            driver = webdriver.Chrome(options=options)
 
             with st.spinner("🔄 Scraping prices... Please be patient."):
                 for index, row in df.iterrows():

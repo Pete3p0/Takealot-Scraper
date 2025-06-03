@@ -22,37 +22,28 @@ def create_driver():
 def get_takealot_prices(url, driver):
     try:
         driver.get(url)
-        time.sleep(6)  # Give more time for JS rendering
+        time.sleep(5)
 
         soup = BeautifulSoup(driver.page_source, 'html.parser')
 
-        # DEBUG: show full page title
-        page_title = soup.title.string if soup.title else "No title"
-        st.write(f"🔍 Page loaded: {page_title}")
+        # Find the right-hand panel container
+        price_box = soup.find('div', class_='buybox-module_buybox-summary_1XcQp')
 
-        # DEBUG: show first 1000 chars of raw HTML
-        st.text(soup.prettify()[:1000])
+        # Now safely extract price and old price from within that
+        if price_box:
+            price_element = price_box.find('span', class_='currency plus currency-module_currency_29IIm')
+            old_price_element = price_box.find('span', class_='strike-through')
+        else:
+            price_element = None
+            old_price_element = None
 
-        # Try direct price class first
-        price_element = soup.find('span', class_='currency plus currency-module_currency_29IIm')
         rsp = price_element.text.strip().replace("R", "").replace(",", "") if price_element else None
-
-        # Try fallback selector if first fails
-        if not rsp:
-            alt_price = soup.select_one("span.currency")
-            rsp = alt_price.text.strip().replace("R", "").replace(",", "") if alt_price else None
-
-        # Find old price
-        old_price_element = soup.find('span', class_='strike-through')
         old_price = old_price_element.text.strip().replace("R", "").replace(",", "") if old_price_element else None
-
-        # Show extracted result
-        st.write(f"💰 RSP: {rsp}, Old Price: {old_price}")
 
         return float(rsp) if rsp else None, float(old_price) if old_price else None
 
     except Exception as e:
-        st.error(f"❌ Error during scraping: {e}")
+        st.error(f"Error extracting prices: {e}")
         return None, None
 
 
