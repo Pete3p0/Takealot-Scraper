@@ -26,24 +26,21 @@ def get_takealot_prices(url, driver):
         driver.get(url)
         time.sleep(5)
 
-        # ✅ Exact XPath for the correct price inside the first active buybox
         try:
-            rsp_elem = driver.find_element(
-                By.XPATH,
-                "//div[contains(@class, 'buybox-offer-module_active')]" +
-                "//span[contains(@class, 'currency-module_currency_')]"
-            )
+            price_box = driver.find_element(By.CLASS_NAME, "buybox-module_buybox-summary_1XcQp")
+        except NoSuchElementException:
+            return None, None
+
+        # Get current RSP
+        try:
+            rsp_elem = price_box.find_element(By.CLASS_NAME, "currency-module_currency_29IIm")
             rsp = rsp_elem.text.strip().replace("R", "").replace(",", "")
         except NoSuchElementException:
             rsp = None
 
-        # ✅ Old price (strikethrough) within same offer block
+        # Get old price if available
         try:
-            old_price_elem = driver.find_element(
-                By.XPATH,
-                "//div[contains(@class, 'buybox-offer-module_active')]" +
-                "//span[contains(@class, 'strike-through')]"
-            )
+            old_price_elem = price_box.find_element(By.CLASS_NAME, "strike-through")
             old_price = old_price_elem.text.strip().replace("R", "").replace(",", "")
         except NoSuchElementException:
             old_price = None
