@@ -4,12 +4,8 @@ from bs4 import BeautifulSoup
 import time
 from io import BytesIO
 from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-
-from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
-import os
 
 def create_driver():
     chrome_options = Options()
@@ -20,17 +16,9 @@ def create_driver():
     chrome_options.add_argument('--window-size=1920x1080')
     chrome_options.binary_location = "/usr/bin/chromium"
 
-    # Let selenium find chromedriver installed in PATH
-    service = Service()  # No path needed if chromedriver is in PATH
+    service = Service()  # Let Selenium find chromedriver in PATH
+    return webdriver.Chrome(service=service, options=chrome_options)
 
-    driver = webdriver.Chrome(service=service, options=chrome_options)
-    return driver
-
-
-
-
-
-# Function to extract prices using a persistent Selenium driver
 def get_takealot_prices(url, driver):
     try:
         driver.get(url)
@@ -38,11 +26,11 @@ def get_takealot_prices(url, driver):
 
         soup = BeautifulSoup(driver.page_source, 'html.parser')
 
-        # Extract current price (RSP)
+        # Current Price (RSP)
         price_element = soup.find('span', class_='currency plus currency-module_currency_29IIm')
         rsp = price_element.text.strip().replace("R", "").replace(",", "") if price_element else None
 
-        # Extract old price (if any)
+        # Old Price (strikethrough)
         old_price_element = soup.find('span', class_='strike-through')
         old_price = old_price_element.text.strip().replace("R", "").replace(",", "") if old_price_element else None
 
@@ -51,16 +39,14 @@ def get_takealot_prices(url, driver):
     except Exception:
         return None, None
 
-
-
 # Streamlit UI
-st.title("🔍 Takealot RSP Scraper (For Kayla)")
+st.title("🛒 Kayla's Takealot RSP Scraper")
 
-uploaded_file = st.file_uploader("📤 Upload Excel file with product URLs in column 3", type=["xlsx"])
+uploaded_file = st.file_uploader("📤 Upload Excel file with Takealot product URLs in column 3", type=["xlsx"])
 
 if uploaded_file:
     df = pd.read_excel(uploaded_file)
-    
+
     if df.shape[1] < 3:
         st.error("❗ Please ensure the file has at least 3 columns and the URLs are in the third column.")
     else:
@@ -72,18 +58,15 @@ if uploaded_file:
             old_price_list = []
             url_col = df.columns[2]
 
-            # Setup Selenium driver once
-            # Setup Selenium driver using cloud-safe config
             driver = create_driver()
 
-
-            with st.spinner("🔄 Scraping prices... Please be patient."):
+            with st.spinner("🔄 Scraping prices... Please wait."):
                 for index, row in df.iterrows():
                     url = str(row[url_col])
                     rsp, old_price = get_takealot_prices(url, driver)
                     rsp_list.append(rsp)
                     old_price_list.append(old_price)
-                    time.sleep(1.5)  # Anti-bot pacing
+                    time.sleep(1.5)
 
             driver.quit()
 
@@ -93,7 +76,7 @@ if uploaded_file:
             st.success("✅ Scraping complete!")
             st.dataframe(df)
 
-            # Prepare for download
+            # Allow download
             towrite = BytesIO()
             df.to_excel(towrite, index=False, engine='openpyxl')
             towrite.seek(0)
