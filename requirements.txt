@@ -1,11 +1,8 @@
-pandas
-numpy
 streamlit
-bs4
 selenium
-XlsxWriter
+bs4
+pandas
 openpyxl
-sqlalchemy
-chromium
-chromedriver
+XlsxWriter
+
 

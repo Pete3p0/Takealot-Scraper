@@ -21,13 +21,14 @@ def create_driver():
     chrome_options.add_argument('--disable-dev-tools')
     chrome_options.add_argument('--no-zygote')
     chrome_options.add_argument('--remote-debugging-port=9222')
+    chrome_options.binary_location = "/usr/bin/chromium-browser"
 
-    chrome_path = '/usr/bin/chromium-browser'
-    driver_path = '/usr/bin/chromedriver'
-
+    driver_path = "/usr/bin/chromedriver"
     service = Service(executable_path=driver_path)
+
     driver = webdriver.Chrome(service=service, options=chrome_options)
     return driver
+
 
 
 
