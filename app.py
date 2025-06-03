@@ -26,23 +26,25 @@ def get_takealot_prices(url, driver):
         driver.get(url)
         time.sleep(5)
 
-        # Look for the active buybox offer block
+        # ✅ Exact XPath for the correct price inside the first active buybox
         try:
-            active_offer = driver.find_element(By.CLASS_NAME, "buybox-offer-module_active_3I1Yj")
-        except NoSuchElementException:
-            return None, None
-
-        # Now look inside that for the price span
-        try:
-            price_element = active_offer.find_element(By.CLASS_NAME, "currency-module_currency_29IIm")
-            rsp = price_element.text.strip().replace("R", "").replace(",", "")
+            rsp_elem = driver.find_element(
+                By.XPATH,
+                "//div[contains(@class, 'buybox-offer-module_active')]" +
+                "//span[contains(@class, 'currency-module_currency_')]"
+            )
+            rsp = rsp_elem.text.strip().replace("R", "").replace(",", "")
         except NoSuchElementException:
             rsp = None
 
-        # Try to find old price (strikethrough)
+        # ✅ Old price (strikethrough) within same offer block
         try:
-            old_price_element = active_offer.find_element(By.CLASS_NAME, "strike-through")
-            old_price = old_price_element.text.strip().replace("R", "").replace(",", "")
+            old_price_elem = driver.find_element(
+                By.XPATH,
+                "//div[contains(@class, 'buybox-offer-module_active')]" +
+                "//span[contains(@class, 'strike-through')]"
+            )
+            old_price = old_price_elem.text.strip().replace("R", "").replace(",", "")
         except NoSuchElementException:
             old_price = None
 
@@ -51,7 +53,6 @@ def get_takealot_prices(url, driver):
     except Exception as e:
         st.error(f"❌ Error extracting prices: {e}")
         return None, None
-
 
 # Streamlit UI
 st.title("🛒 Kayla's Takealot RSP Scraper")
