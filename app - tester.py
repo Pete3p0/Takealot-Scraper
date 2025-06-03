@@ -34,29 +34,20 @@ def create_driver():
 def get_takealot_prices(url, driver):
     try:
         driver.get(url)
-        time.sleep(5)
+        time.sleep(5)  # Give the page time to render
 
         soup = BeautifulSoup(driver.page_source, 'html.parser')
 
-        # Find the active buybox offer section
-        active_offer = soup.find('div', class_='buybox-offer-module_buybox-offer_1JNpe buybox-offer-module_active_3I1Yj')
+        # Adjust these classes based on current site HTML
+        price_element = soup.find('span', {'class': 'currency plus currency-module_currency_29IIm'})
+        old_price_element = soup.find('span', {'class': 'strike-through'})
 
-        # Only look for price within the active offer
-        if active_offer:
-            price_element = active_offer.find('span', class_='currency plus currency-module_currency_29IIm')
-            rsp = price_element.text.strip().replace("R", "").replace(",", "") if price_element else None
-        else:
-            rsp = None
-
-        # Old price (optional): Find strikethrough anywhere
-        old_price_element = soup.find('span', class_='strike-through')
+        rsp = price_element.text.strip().replace("R", "").replace(",", "") if price_element else None
         old_price = old_price_element.text.strip().replace("R", "").replace(",", "") if old_price_element else None
 
         return float(rsp) if rsp else None, float(old_price) if old_price else None
-
     except Exception:
         return None, None
-
 
 # Streamlit UI
 st.title("🔍 Takealot RSP Scraper (For Kayla)")
