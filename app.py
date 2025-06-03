@@ -26,21 +26,16 @@ def get_takealot_prices(url, driver):
         driver.get(url)
         time.sleep(5)
 
+        # ✅ Use absolute XPath to extract the main price only
         try:
-            price_box = driver.find_element(By.CLASS_NAME, "buybox-module_buybox-summary_1XcQp")
-        except NoSuchElementException:
-            return None, None
-
-        # Get current RSP
-        try:
-            rsp_elem = price_box.find_element(By.CLASS_NAME, "currency-module_currency_29IIm")
+            rsp_elem = driver.find_element(By.XPATH, "/html/body/div[1]/div[5]/div[1]/div[2]/aside/div[1]/div[1]/div[1]/div[1]/div/span[1]")
             rsp = rsp_elem.text.strip().replace("R", "").replace(",", "")
         except NoSuchElementException:
             rsp = None
 
-        # Get old price if available
+        # ✅ Old price is in the second span, next to the RSP
         try:
-            old_price_elem = price_box.find_element(By.CLASS_NAME, "strike-through")
+            old_price_elem = driver.find_element(By.XPATH, "/html/body/div[1]/div[5]/div[1]/div[2]/aside/div[1]/div[1]/div[1]/div[1]/div/span[2]")
             old_price = old_price_elem.text.strip().replace("R", "").replace(",", "")
         except NoSuchElementException:
             old_price = None
