@@ -11,23 +11,51 @@ import chromedriver_autoinstaller
 chromedriver_autoinstaller.install()
 
 # Function to extract prices using a persistent Selenium driver
+# def get_takealot_prices(url, driver):
+#     try:
+#         driver.get(url)
+#         time.sleep(5)  # Give the page time to render
+
+#         soup = BeautifulSoup(driver.page_source, 'html.parser')
+
+#         # Adjust these classes based on current site HTML
+#         price_element = soup.find('span', {'class': 'currency plus currency-module_currency_29IIm'})
+#         old_price_element = soup.find('span', {'class': 'strike-through'})
+
+#         rsp = price_element.text.strip().replace("R", "").replace(",", "") if price_element else None
+#         old_price = old_price_element.text.strip().replace("R", "").replace(",", "") if old_price_element else None
+
+#         return float(rsp) if rsp else None, float(old_price) if old_price else None
+#     except Exception:
+#         return None, None
+
 def get_takealot_prices(url, driver):
     try:
         driver.get(url)
-        time.sleep(5)  # Give the page time to render
+        time.sleep(5)
 
         soup = BeautifulSoup(driver.page_source, 'html.parser')
 
-        # Adjust these classes based on current site HTML
-        price_element = soup.find('span', {'class': 'currency plus currency-module_currency_29IIm'})
-        old_price_element = soup.find('span', {'class': 'strike-through'})
+        # Find the right-hand panel container
+        price_box = soup.find('div', class_='buybox-offer-module_buybox-offer_1JNpe buybox-offer-module_active_3I1Yj')
+
+        # Now safely extract price and old price from within that
+        if price_box:
+            price_element = price_box.find('span', class_='currency plus currency-module_currency_29IIm')
+            old_price_element = price_box.find('span', class_='strike-through')
+        else:
+            price_element = None
+            old_price_element = None
 
         rsp = price_element.text.strip().replace("R", "").replace(",", "") if price_element else None
         old_price = old_price_element.text.strip().replace("R", "").replace(",", "") if old_price_element else None
 
         return float(rsp) if rsp else None, float(old_price) if old_price else None
-    except Exception:
+
+    except Exception as e:
+        st.error(f"Error extracting prices: {e}")
         return None, None
+
 
 # Streamlit UI
 st.title("🔍 Takealot RSP Scraper (Fast Selenium Version)")

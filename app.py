@@ -6,6 +6,8 @@ from io import BytesIO
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
+from selenium.common.exceptions import NoSuchElementException
 
 def create_driver():
     chrome_options = Options()
@@ -22,19 +24,32 @@ def create_driver():
 def get_takealot_prices(url, driver):
     try:
         driver.get(url)
-        time.sleep(5)  # Give the page time to render
+        time.sleep(5)
 
-        soup = BeautifulSoup(driver.page_source, 'html.parser')
+        # Look for the active buybox offer block
+        try:
+            active_offer = driver.find_element(By.CLASS_NAME, "buybox-offer-module_active_3I1Yj")
+        except NoSuchElementException:
+            return None, None
 
-        # Adjust these classes based on current site HTML
-        price_element = soup.find('span', {'class': 'currency plus currency-module_currency_29IIm'})
-        old_price_element = soup.find('span', {'class': 'strike-through'})
+        # Now look inside that for the price span
+        try:
+            price_element = active_offer.find_element(By.CLASS_NAME, "currency-module_currency_29IIm")
+            rsp = price_element.text.strip().replace("R", "").replace(",", "")
+        except NoSuchElementException:
+            rsp = None
 
-        rsp = price_element.text.strip().replace("R", "").replace(",", "") if price_element else None
-        old_price = old_price_element.text.strip().replace("R", "").replace(",", "") if old_price_element else None
+        # Try to find old price (strikethrough)
+        try:
+            old_price_element = active_offer.find_element(By.CLASS_NAME, "strike-through")
+            old_price = old_price_element.text.strip().replace("R", "").replace(",", "")
+        except NoSuchElementException:
+            old_price = None
 
         return float(rsp) if rsp else None, float(old_price) if old_price else None
-    except Exception:
+
+    except Exception as e:
+        st.error(f"❌ Error extracting prices: {e}")
         return None, None
 
 
