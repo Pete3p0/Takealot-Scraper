@@ -38,17 +38,11 @@ def get_takealot_prices(url, driver):
 
         soup = BeautifulSoup(driver.page_source, 'html.parser')
 
-        # Find the active buybox offer section
-        active_offer = soup.find('div', class_='buybox-offer-module_buybox-offer_1JNpe buybox-offer-module_active_3I1Yj')
+        # Extract current price (RSP)
+        price_element = soup.find('span', class_='currency plus currency-module_currency_29IIm')
+        rsp = price_element.text.strip().replace("R", "").replace(",", "") if price_element else None
 
-        # Only look for price within the active offer
-        if active_offer:
-            price_element = active_offer.find('span', class_='currency plus currency-module_currency_29IIm')
-            rsp = price_element.text.strip().replace("R", "").replace(",", "") if price_element else None
-        else:
-            rsp = None
-
-        # Old price (optional): Find strikethrough anywhere
+        # Extract old price (if any)
         old_price_element = soup.find('span', class_='strike-through')
         old_price = old_price_element.text.strip().replace("R", "").replace(",", "") if old_price_element else None
 
@@ -56,6 +50,7 @@ def get_takealot_prices(url, driver):
 
     except Exception:
         return None, None
+
 
 
 # Streamlit UI
