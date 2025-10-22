@@ -99,6 +99,10 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException
 
 # ---------- Create Chrome driver for Streamlit Cloud ----------
 def create_driver():
@@ -117,29 +121,27 @@ def create_driver():
 def get_takealot_prices(url, driver):
     try:
         driver.get(url)
-        time.sleep(5)  # Allow time for JS rendering
 
-        rsp = None
-        old_price = None
-
-        # ✅ Look inside the main buybox summary section
+        # Wait up to 15 seconds for RSP price to appear in the buybox
         try:
-            rsp_elem = driver.find_element(
-                By.XPATH,
-                "//div[contains(@class, 'buybox-module_buybox-summary')]//span[contains(@class, 'currency-module_currency')]"
+            rsp_elem = WebDriverWait(driver, 15).until(
+                EC.presence_of_element_located((By.XPATH,
+                    "//div[contains(@class, 'buybox-module_buybox-summary')]//span[contains(@class, 'currency-module_currency')]"
+                ))
             )
             rsp = rsp_elem.text.strip().replace("R", "").replace(",", "")
-        except NoSuchElementException:
-            pass
+        except TimeoutException:
+            rsp = None
 
+        # Try to get old price (optional)
         try:
             old_price_elem = driver.find_element(
                 By.XPATH,
                 "//div[contains(@class, 'buybox-module_buybox-summary')]//span[contains(@class, 'strike-through')]"
             )
             old_price = old_price_elem.text.strip().replace("R", "").replace(",", "")
-        except NoSuchElementException:
-            pass
+        except:
+            old_price = None
 
         return float(rsp) if rsp else None, float(old_price) if old_price else None
 
