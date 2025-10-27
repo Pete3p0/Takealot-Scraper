@@ -103,9 +103,11 @@ def fetch_takealot_data(plid):
 
     try:
         response = requests.get(url, headers=headers)
-        if response.status_code != 200 or not response.text.strip():
+        if response.status_code == 404:
+            return {"PLID": plid, "Error": "It looks like this product is no longer available"}
+        elif response.status_code != 200 or not response.text.strip():
             return {"PLID": plid, "Error": f"Empty or bad response. Code: {response.status_code}"}
-        
+
         data = response.json()
 
         # Buybox prices
@@ -164,50 +166,47 @@ def fetch_takealot_data(plid):
 # --------- Streamlit App ---------
 st.title("🛒 Takealot Product Info API Extractor")
 
-uploaded_file = st.file_uploader("📤 Upload Excel file with Product Code, Description, and URL in the first 3 columns", type=["xlsx"])
+uploaded_file = st.file_uploader("📤 Upload Excel file with URLs in the 3rd column", type=["xlsx"])
 
 if uploaded_file:
     df = pd.read_excel(uploaded_file)
 
     if df.shape[1] < 3:
-        st.error("❗ Please make sure the file has at least 3 columns: Product Code, Description, and Link.")
+        st.error("❗ Please make sure the file has at least 3 columns, with the URL in the third column.")
     else:
         st.write("📄 Preview of uploaded file:")
         st.dataframe(df.head())
 
         if st.button("🚀 Start Fetching Product Info"):
+            url_col = df.columns[2]
             results = []
 
             with st.spinner("🔍 Fetching data from Takealot API..."):
                 for i, row in df.iterrows():
-                    product_code = row.iloc[0]
-                    description = row.iloc[1]
-                    url = str(row.iloc[2])
-
+                    url = str(row[url_col])
                     if "PLID" not in url:
                         continue
-
                     plid = url.split("PLID")[-1].split("?")[0]
                     result = fetch_takealot_data(plid)
 
-                    # Add base info back in
-                    result["Product Code"] = product_code
-                    result["Description"] = description
+                    # Append original columns
+                    result["Product Code"] = row[0]
+                    result["Description"] = row[1]
                     result["Link"] = url
 
                     results.append(result)
-                    time.sleep(1)
+                    time.sleep(1.5)  # ⏳ Respectful delay
 
+            # Convert results to DataFrame and reorder columns
             results_df = pd.DataFrame(results)
-
-            # Ensure order: Product Code, Description, Link, rest...
             front_cols = ["Product Code", "Description", "Link"]
-            remaining_cols = [col for col in results_df.columns if col not in front_cols]
-            results_df = results_df[front_cols + remaining_cols]
+            reordered = front_cols + [col for col in results_df.columns if col not in front_cols]
+            results_df = results_df[reordered]
 
             st.success("✅ Done!")
             st.dataframe(results_df)
 
+            # Excel download
             towrite = BytesIO()
             results_df.to_excel(towrite, index=False, engine="openpyxl")
             towrite.seek(0)
