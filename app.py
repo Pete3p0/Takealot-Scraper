@@ -159,7 +159,7 @@ def fetch_takealot_data(plid):
         return {
             "PLID": plid,
             "Error": str(e),
-            "URL":url
+            "URL": url
         }
 
 # --------- Streamlit App ---------
@@ -171,7 +171,7 @@ if uploaded_file:
     df = pd.read_excel(uploaded_file)
 
     if df.shape[1] < 3:
-        st.error("❗ Please make sure the file has at least 3 columns, with the URL in the third column.")
+        st.error("❗ Please make sure the file has at least 3 columns: Product Code, Description, and URL.")
     else:
         st.write("📄 Preview of uploaded file:")
         st.dataframe(df.head())
@@ -186,8 +186,14 @@ if uploaded_file:
                     if "PLID" not in url:
                         continue
                     plid = url.split("PLID")[-1].split("?")[0]
-                    result = fetch_takealot_data(plid)
-                    results.append(result)
+                    product_info = fetch_takealot_data(plid)
+
+                    # Include original columns in the result
+                    product_info["Product Code"] = row[df.columns[0]]
+                    product_info["Description"] = row[df.columns[1]]
+                    product_info["Link"] = url
+
+                    results.append(product_info)
                     time.sleep(1)
 
             results_df = pd.DataFrame(results)
