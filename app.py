@@ -98,7 +98,7 @@ from io import BytesIO
 
 # --------- API Function ---------
 def fetch_takealot_data(plid):
-    url = f"https://api.takealot.com/rest/v-1-14-0/product-details/{plid}?platform=desktop&display_credit=true"
+    url = f"https://api.takealot.com/rest/v-1-14-0/product-details/PLID{plid}?platform=desktop&display_credit=true"
 
     try:
         response = requests.get(url)
