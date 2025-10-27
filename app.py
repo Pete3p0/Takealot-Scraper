@@ -113,7 +113,6 @@ def fetch_takealot_data(plid):
             return {"PLID": plid, "Error": "It looks like this product is no longer available"}
         elif response.status_code != 200 or not response.text.strip():
             return {"PLID": plid, "Error": f"Empty or bad response. Code: {response.status_code}"}
-
         data = response.json()
 
         # Buybox prices
