@@ -154,7 +154,8 @@ def fetch_takealot_data(plid):
     except Exception as e:
         return {
             "PLID": plid,
-            "Error": str(e)
+            "Error": str(e),
+            "URL":url
         }
 
 # --------- Streamlit App ---------
