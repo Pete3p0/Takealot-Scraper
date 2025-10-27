@@ -99,9 +99,10 @@ from io import BytesIO
 # --------- API Function ---------
 def fetch_takealot_data(plid):
     url = f"https://api.takealot.com/rest/v-1-14-0/product-details/PLID{plid}?platform=desktop&display_credit=true"
+    headers = {"User-Agent": "Mozilla/5.0"}
 
     try:
-        response = requests.get(url)
+        response = requests.get(url, headers=headers)
         data = response.json()
 
         # Buybox prices
