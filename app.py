@@ -96,10 +96,17 @@ import time
 import requests
 from io import BytesIO
 
-# --------- API Function ---------
+# API Function 
 def fetch_takealot_data(plid):
     url = f"https://api.takealot.com/rest/v-1-14-0/product-details/PLID{plid}?platform=desktop&display_credit=true"
-    headers = {"User-Agent": "Mozilla/5.0"}
+    headers = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/117.0.0.0 Safari/537.36"
+    )
+}
+
 
     try:
         response = requests.get(url, headers=headers)
@@ -163,7 +170,7 @@ def fetch_takealot_data(plid):
             "Error": str(e),
         }
 
-# --------- Streamlit App ---------
+# Streamlit App
 st.title("🛒 Takealot Product Info API Extractor")
 
 uploaded_file = st.file_uploader("📤 Upload Excel file with URLs in the 3rd column", type=["xlsx"])
