@@ -103,6 +103,9 @@ def fetch_takealot_data(plid):
 
     try:
         response = requests.get(url, headers=headers)
+        if response.status_code != 200 or not response.text.strip():
+            return {"PLID": plid, "Error": f"Empty or bad response. Code: {response.status_code}"}
+        
         data = response.json()
 
         # Buybox prices
@@ -110,13 +113,13 @@ def fetch_takealot_data(plid):
         listing_price = data.get("buybox", {}).get("items", [{}])[0].get("listing_price", "")
 
         # Stock availability
-        stock_status = data.get("buybox", {}).get("items", [{}])[0].get("stock_availability", "")
+        stock_status = data.get("buybox", {}).get("items", [{}])[0].get("stock_availability", {}).get("status")
 
         # Seller (primary)
         seller_info = data.get("seller_detail", {}).get("display_name", "Fulfilled by Takealot")
 
         # Ratings
-        star_rating = data.get("star_rating")
+        star_rating = data.get("reviews", {}).get("star_rating")
         review_count = data.get("reviews", {}).get("count")
 
         dist = data.get("reviews", {}).get("distribution", {})
