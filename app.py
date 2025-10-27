@@ -96,30 +96,32 @@ import time
 import requests
 from io import BytesIO
 
-# --------- API Function ---------
+# API Function 
 def fetch_takealot_data(plid):
     url = f"https://api.takealot.com/rest/v-1-14-0/product-details/PLID{plid}?platform=desktop&display_credit=true"
     headers = {
-        "Accept": "application/json, text/plain, */*",
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36",
-        "Accept-Language": "en-ZA,en;q=0.9"
+    "Accept": "application/json, text/plain, */*",
+    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36",
+    "Accept-Language": "en-ZA,en;q=0.9"
     }
+
+
 
     try:
         response = requests.get(url, headers=headers)
         if response.status_code == 404:
             return {"PLID": plid, "Error": "It looks like this product is no longer available"}
-        if response.status_code != 200 or not response.text.strip():
+        elif response.status_code != 200 or not response.text.strip():
             return {"PLID": plid, "Error": f"Empty or bad response. Code: {response.status_code}"}
 
         data = response.json()
 
+        # Buybox prices
         price = data.get("buybox", {}).get("items", [{}])[0].get("price")
         listing_price = data.get("buybox", {}).get("items", [{}])[0].get("listing_price", "")
 
         # Stock availability
-        stock_info = data.get("buybox", {}).get("items", [{}])[0].get("stock_availability", {})
-        stock_status = stock_info.get("status", "")
+        stock_status = data.get("buybox", {}).get("items", [{}])[0].get("stock_availability", {}).get("status")
 
         # Seller (primary)
         seller_info = data.get("seller_detail", {}).get("display_name", "Fulfilled by Takealot")
@@ -158,14 +160,16 @@ def fetch_takealot_data(plid):
             "4★": num_4,
             "5★": num_5,
             "Other Seller": alt_seller,
-            "Other Price": alt_price,
-            "Error": ""
+            "Other Price": alt_price
         }
 
     except Exception as e:
-        return {"PLID": plid, "Error": str(e)}
+        return {
+            "PLID": plid,
+            "Error": str(e),
+        }
 
-# --------- Streamlit App ---------
+# Streamlit App
 st.title("🛒 Takealot Product Info API Extractor")
 
 uploaded_file = st.file_uploader("📤 Upload Excel file with URLs in the 3rd column", type=["xlsx"])
@@ -174,61 +178,41 @@ if uploaded_file:
     df = pd.read_excel(uploaded_file)
 
     if df.shape[1] < 3:
-        st.error("❗ Please make sure the file has at least 3 columns: Product Code, Description, and URL.")
+        st.error("❗ Please make sure the file has at least 3 columns, with the URL in the third column.")
     else:
         st.write("📄 Preview of uploaded file:")
         st.dataframe(df.head())
 
         if st.button("🚀 Start Fetching Product Info"):
+            url_col = df.columns[2]
             results = []
-
-            url_col = df.columns[2]  # Expecting the URL to be in the third column
 
             with st.spinner("🔍 Fetching data from Takealot API..."):
                 for i, row in df.iterrows():
-                    product_code = row[df.columns[0]]
-                    description = row[df.columns[1]]
                     url = str(row[url_col])
-
                     if "PLID" not in url:
-                        result = {
-                            "PLID": "",
-                            "RSP": None,
-                            "Original Price": None,
-                            "Seller": "",
-                            "Stock Availability": "",
-                            "Rating": None,
-                            "Review Count": None,
-                            "1★": None,
-                            "2★": None,
-                            "3★": None,
-                            "4★": None,
-                            "5★": None,
-                            "Other Seller": "",
-                            "Other Price": "",
-                            "Error": "Invalid URL - no PLID"
-                        }
-                    else:
-                        plid = url.split("PLID")[-1].split("?")[0]
-                        result = fetch_takealot_data(plid)
+                        continue
+                    plid = url.split("PLID")[-1].split("?")[0]
+                    result = fetch_takealot_data(plid)
 
-                    # Add original product metadata
-                    result["Product Code"] = product_code
-                    result["Description"] = description
+                    # Append original columns
+                    result["Product Code"] = row[0]
+                    result["Description"] = row[1]
                     result["Link"] = url
 
                     results.append(result)
-                    time.sleep(1)
+                    time.sleep(1.5)  # ⏳ Respectful delay
 
+            # Convert results to DataFrame and reorder columns
             results_df = pd.DataFrame(results)
-
-            # Reorder columns: Product Info first
-            ordered_cols = ["Product Code", "Description", "Link"] + [col for col in results_df.columns if col not in ["Product Code", "Description", "Link"]]
-            results_df = results_df[ordered_cols]
+            front_cols = ["Product Code", "Description", "Link"]
+            reordered = front_cols + [col for col in results_df.columns if col not in front_cols]
+            results_df = results_df[reordered]
 
             st.success("✅ Done!")
             st.dataframe(results_df)
 
+            # Excel download
             towrite = BytesIO()
             results_df.to_excel(towrite, index=False, engine="openpyxl")
             towrite.seek(0)
