@@ -159,7 +159,6 @@ def fetch_takealot_data(plid):
         return {
             "PLID": plid,
             "Error": str(e),
-            "URL": url
         }
 
 # --------- Streamlit App ---------
