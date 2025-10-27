@@ -201,7 +201,7 @@ if uploaded_file:
                     result["Link"] = url
 
                     results.append(result)
-                    time.sleep(1.5)  # ⏳ Respectful delay
+                    time.sleep(1)  # delay
 
             # Convert results to DataFrame and reorder columns
             results_df = pd.DataFrame(results)
