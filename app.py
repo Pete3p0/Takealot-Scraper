@@ -165,38 +165,46 @@ def fetch_takealot_data(plid):
 # --------- Streamlit App ---------
 st.title("🛒 Takealot Product Info API Extractor")
 
-uploaded_file = st.file_uploader("📤 Upload Excel file with URLs in the 3rd column", type=["xlsx"])
+uploaded_file = st.file_uploader("📤 Upload Excel file with Product Code, Description, and URL in the first 3 columns", type=["xlsx"])
 
 if uploaded_file:
     df = pd.read_excel(uploaded_file)
 
     if df.shape[1] < 3:
-        st.error("❗ Please make sure the file has at least 3 columns: Product Code, Description, and URL.")
+        st.error("❗ Please make sure the file has at least 3 columns: Product Code, Description, and Link.")
     else:
         st.write("📄 Preview of uploaded file:")
         st.dataframe(df.head())
 
         if st.button("🚀 Start Fetching Product Info"):
-            url_col = df.columns[2]
             results = []
 
             with st.spinner("🔍 Fetching data from Takealot API..."):
                 for i, row in df.iterrows():
-                    url = str(row[url_col])
+                    product_code = row.iloc[0]
+                    description = row.iloc[1]
+                    url = str(row.iloc[2])
+
                     if "PLID" not in url:
                         continue
+
                     plid = url.split("PLID")[-1].split("?")[0]
-                    product_info = fetch_takealot_data(plid)
+                    result = fetch_takealot_data(plid)
 
-                    # Include original columns in the result
-                    product_info["Product Code"] = row[df.columns[0]]
-                    product_info["Description"] = row[df.columns[1]]
-                    product_info["Link"] = url
+                    # Add base info back in
+                    result["Product Code"] = product_code
+                    result["Description"] = description
+                    result["Link"] = url
 
-                    results.append(product_info)
+                    results.append(result)
                     time.sleep(1)
 
             results_df = pd.DataFrame(results)
+
+            # Ensure order: Product Code, Description, Link, rest...
+            front_cols = ["Product Code", "Description", "Link"]
+            remaining_cols = [col for col in results_df.columns if col not in front_cols]
+            results_df = results_df[front_cols + remaining_cols]
 
             st.success("✅ Done!")
             st.dataframe(results_df)
